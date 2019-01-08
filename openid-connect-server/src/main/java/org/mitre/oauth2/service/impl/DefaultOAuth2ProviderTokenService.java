@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
  * limitations under the License.
  *******************************************************************************/
 /**
- * 
+ *
  */
 package org.mitre.oauth2.service.impl;
 
@@ -62,8 +63,9 @@ import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.TokenRequest;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.collect.Sets;
+import com.google.common.base.Strings;
 import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
@@ -71,7 +73,7 @@ import com.nimbusds.jwt.PlainJWT;
 
 /**
  * @author jricher
- * 
+ *
  */
 @Service("defaultOAuth2ProviderTokenService")
 public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityService {
@@ -99,35 +101,14 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 	@Autowired
 	private ApprovedSiteService approvedSiteService;
 
-
 	@Override
-	public Set<OAuth2AccessTokenEntity> getAllAccessTokensForUser(String id) {
-
-		Set<OAuth2AccessTokenEntity> all = tokenRepository.getAllAccessTokens();
-		Set<OAuth2AccessTokenEntity> results = Sets.newLinkedHashSet();
-
-		for (OAuth2AccessTokenEntity token : all) {
-			if (clearExpiredAccessToken(token) != null && token.getAuthenticationHolder().getAuthentication().getName().equals(id)) {
-				results.add(token);
-			}
-		}
-
-		return results;
+	public Set<OAuth2AccessTokenEntity> getAllAccessTokensForUser(String userName) {
+		return tokenRepository.getAccessTokensByUserName(userName);
 	}
 
-
 	@Override
-	public Set<OAuth2RefreshTokenEntity> getAllRefreshTokensForUser(String id) {
-		Set<OAuth2RefreshTokenEntity> all = tokenRepository.getAllRefreshTokens();
-		Set<OAuth2RefreshTokenEntity> results = Sets.newLinkedHashSet();
-
-		for (OAuth2RefreshTokenEntity token : all) {
-			if (clearExpiredRefreshToken(token) != null && token.getAuthenticationHolder().getAuthentication().getName().equals(id)) {
-				results.add(token);
-			}
-		}
-
-		return results;
+	public Set<OAuth2RefreshTokenEntity> getAllRefreshTokensForUser(String userName) {
+		return tokenRepository.getRefreshTokensByUserName(userName);
 	}
 
 	@Override
@@ -157,7 +138,7 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 			return token;
 		}
 	}
-	
+
 	/**
 	 * Utility function to delete a refresh token that's expired before returning it.
 	 * @param token the token to check
@@ -175,8 +156,9 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 			return token;
 		}
 	}
-	
+
 	@Override
+	@Transactional(value="defaultTransactionManager")
 	public OAuth2AccessTokenEntity createAccessToken(OAuth2Authentication authentication) throws AuthenticationException, InvalidClientException {
 		if (authentication != null && authentication.getOAuth2Request() != null) {
 			// look up our client
@@ -188,14 +170,13 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 				throw new InvalidClientException("Client not found: " + request.getClientId());
 			}
 
-			
 			// handle the PKCE code challenge if present
 			if (request.getExtensions().containsKey(CODE_CHALLENGE)) {
 				String challenge = (String) request.getExtensions().get(CODE_CHALLENGE);
 				PKCEAlgorithm alg = PKCEAlgorithm.parse((String) request.getExtensions().get(CODE_CHALLENGE_METHOD));
-				
+
 				String verifier = request.getRequestParameters().get(CODE_VERIFIER);
-				
+
 				if (alg.equals(PKCEAlgorithm.plain)) {
 					// do a direct string comparison
 					if (!challenge.equals(verifier)) {
@@ -213,10 +194,9 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 						logger.error("Unknown algorithm for PKCE digest", e);
 					}
 				}
-				
+
 			}
 
-			
 			OAuth2AccessTokenEntity token = new OAuth2AccessTokenEntity();//accessTokenFactory.createNewAccessToken();
 
 			// attach the client
@@ -302,19 +282,24 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 		refreshToken.setAuthenticationHolder(authHolder);
 		refreshToken.setClient(client);
 
-
-
 		// save the token first so that we can set it to a member of the access token (NOTE: is this step necessary?)
 		OAuth2RefreshTokenEntity savedRefreshToken = tokenRepository.saveRefreshToken(refreshToken);
 		return savedRefreshToken;
 	}
 
 	@Override
+	@Transactional(value="defaultTransactionManager")
 	public OAuth2AccessTokenEntity refreshAccessToken(String refreshTokenValue, TokenRequest authRequest) throws AuthenticationException {
+		
+		if (Strings.isNullOrEmpty(refreshTokenValue)) {
+			// throw an invalid token exception if there's no refresh token value at all
+			throw new InvalidTokenException("Invalid refresh token: " + refreshTokenValue);
+		}
 
 		OAuth2RefreshTokenEntity refreshToken = clearExpiredRefreshToken(tokenRepository.getRefreshTokenByValue(refreshTokenValue));
 
 		if (refreshToken == null) {
+			// throw an invalid token exception if we couldn't find the token
 			throw new InvalidTokenException("Invalid refresh token: " + refreshTokenValue);
 		}
 
@@ -399,12 +384,10 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 		tokenRepository.saveAccessToken(token);
 
 		return token;
-
 	}
 
 	@Override
 	public OAuth2Authentication loadAuthentication(String accessTokenValue) throws AuthenticationException {
-
 		OAuth2AccessTokenEntity accessToken = clearExpiredAccessToken(tokenRepository.getAccessTokenByValue(accessTokenValue));
 
 		if (accessToken == null) {
@@ -455,6 +438,7 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 	 * Revoke a refresh token and all access tokens issued to it.
 	 */
 	@Override
+	@Transactional(value="defaultTransactionManager")
 	public void revokeRefreshToken(OAuth2RefreshTokenEntity refreshToken) {
 		tokenRepository.clearAccessTokensForRefreshToken(refreshToken);
 		tokenRepository.removeRefreshToken(refreshToken);
@@ -464,22 +448,16 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 	 * Revoke an access token.
 	 */
 	@Override
+	@Transactional(value="defaultTransactionManager")
 	public void revokeAccessToken(OAuth2AccessTokenEntity accessToken) {
 		tokenRepository.removeAccessToken(accessToken);
 	}
 
-
-	/* (non-Javadoc)
-	 * @see org.mitre.oauth2.service.OAuth2TokenEntityService#getAccessTokensForClient(org.mitre.oauth2.model.ClientDetailsEntity)
-	 */
 	@Override
 	public List<OAuth2AccessTokenEntity> getAccessTokensForClient(ClientDetailsEntity client) {
 		return tokenRepository.getAccessTokensForClient(client);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.mitre.oauth2.service.OAuth2TokenEntityService#getRefreshTokensForClient(org.mitre.oauth2.model.ClientDetailsEntity)
-	 */
 	@Override
 	public List<OAuth2RefreshTokenEntity> getRefreshTokensForClient(ClientDetailsEntity client) {
 		return tokenRepository.getRefreshTokensForClient(client);
@@ -492,55 +470,56 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 	public void clearExpiredTokens() {
 		logger.debug("Cleaning out all expired tokens");
 
-        new AbstractPageOperationTemplate<OAuth2AccessTokenEntity>() {
-            @Override
-            public Collection<OAuth2AccessTokenEntity> fetchPage() {
-                return tokenRepository.getAllExpiredAccessTokens(new DefaultPageCriteria());
-            }
+		new AbstractPageOperationTemplate<OAuth2AccessTokenEntity>("clearExpiredAccessTokens") {
+			@Override
+			public Collection<OAuth2AccessTokenEntity> fetchPage() {
+				return tokenRepository.getAllExpiredAccessTokens(new DefaultPageCriteria());
+			}
 
-            @Override
-            public void doOperation(OAuth2AccessTokenEntity item) {
-                revokeAccessToken(item);
-            }
-        }.execute();
+			@Override
+			public void doOperation(OAuth2AccessTokenEntity item) {
+				revokeAccessToken(item);
+			}
+		}.execute();
 
-        new AbstractPageOperationTemplate<OAuth2RefreshTokenEntity>() {
-            @Override
-            public Collection<OAuth2RefreshTokenEntity> fetchPage() {
-                return tokenRepository.getAllExpiredRefreshTokens(new DefaultPageCriteria());
-            }
+		new AbstractPageOperationTemplate<OAuth2RefreshTokenEntity>("clearExpiredRefreshTokens") {
+			@Override
+			public Collection<OAuth2RefreshTokenEntity> fetchPage() {
+				return tokenRepository.getAllExpiredRefreshTokens(new DefaultPageCriteria());
+			}
 
-            @Override
-            public void doOperation(OAuth2RefreshTokenEntity item) {
-                revokeRefreshToken(item);
-            }
-        }.execute();
+			@Override
+			public void doOperation(OAuth2RefreshTokenEntity item) {
+				revokeRefreshToken(item);
+			}
+		}.execute();
 
-        new AbstractPageOperationTemplate<AuthenticationHolderEntity>() {
-            @Override
-            public Collection<AuthenticationHolderEntity> fetchPage() {
-                return authenticationHolderRepository.getOrphanedAuthenticationHolders(new DefaultPageCriteria());
-            }
+		new AbstractPageOperationTemplate<AuthenticationHolderEntity>("clearExpiredAuthenticationHolders") {
+			@Override
+			public Collection<AuthenticationHolderEntity> fetchPage() {
+				return authenticationHolderRepository.getOrphanedAuthenticationHolders(new DefaultPageCriteria());
+			}
 
-            @Override
-            public void doOperation(AuthenticationHolderEntity item) {
-                authenticationHolderRepository.remove(item);
-            }
-        }.execute();
+			@Override
+			public void doOperation(AuthenticationHolderEntity item) {
+				authenticationHolderRepository.remove(item);
+			}
+		}.execute();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.mitre.oauth2.service.OAuth2TokenEntityService#saveAccessToken(org.mitre.oauth2.model.OAuth2AccessTokenEntity)
 	 */
 	@Override
+	@Transactional(value="defaultTransactionManager")
 	public OAuth2AccessTokenEntity saveAccessToken(OAuth2AccessTokenEntity accessToken) {
 		OAuth2AccessTokenEntity newToken = tokenRepository.saveAccessToken(accessToken);
-		
+
 		// if the old token has any additional information for the return from the token endpoint, carry it through here after save
 		if (accessToken.getAdditionalInformation() != null && !accessToken.getAdditionalInformation().isEmpty()) {
 			newToken.getAdditionalInformation().putAll(accessToken.getAdditionalInformation());
 		}
-		
+
 		return newToken;
 	}
 
@@ -548,6 +527,7 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 	 * @see org.mitre.oauth2.service.OAuth2TokenEntityService#saveRefreshToken(org.mitre.oauth2.model.OAuth2RefreshTokenEntity)
 	 */
 	@Override
+	@Transactional(value="defaultTransactionManager")
 	public OAuth2RefreshTokenEntity saveRefreshToken(OAuth2RefreshTokenEntity refreshToken) {
 		return tokenRepository.saveRefreshToken(refreshToken);
 	}
@@ -580,7 +560,4 @@ public class DefaultOAuth2ProviderTokenService implements OAuth2TokenEntityServi
 
 		return null;
 	}
-
-
-
 }

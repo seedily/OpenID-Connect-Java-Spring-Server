@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
  * limitations under the License.
  *******************************************************************************/
 /**
- * 
+ *
  */
 package org.mitre.oauth2.model;
 
@@ -52,7 +53,8 @@ import com.nimbusds.jwt.JWT;
 	@NamedQuery(name = OAuth2RefreshTokenEntity.QUERY_ALL, query = "select r from OAuth2RefreshTokenEntity r"),
 	@NamedQuery(name = OAuth2RefreshTokenEntity.QUERY_EXPIRED_BY_DATE, query = "select r from OAuth2RefreshTokenEntity r where r.expiration <= :" + OAuth2RefreshTokenEntity.PARAM_DATE),
 	@NamedQuery(name = OAuth2RefreshTokenEntity.QUERY_BY_CLIENT, query = "select r from OAuth2RefreshTokenEntity r where r.client = :" + OAuth2RefreshTokenEntity.PARAM_CLIENT),
-	@NamedQuery(name = OAuth2RefreshTokenEntity.QUERY_BY_TOKEN_VALUE, query = "select r from OAuth2RefreshTokenEntity r where r.jwt = :" + OAuth2RefreshTokenEntity.PARAM_TOKEN_VALUE)
+	@NamedQuery(name = OAuth2RefreshTokenEntity.QUERY_BY_TOKEN_VALUE, query = "select r from OAuth2RefreshTokenEntity r where r.jwt = :" + OAuth2RefreshTokenEntity.PARAM_TOKEN_VALUE),
+	@NamedQuery(name = OAuth2RefreshTokenEntity.QUERY_BY_NAME, query = "select r from OAuth2RefreshTokenEntity r where r.authenticationHolder.userAuth.name = :" + OAuth2RefreshTokenEntity.PARAM_NAME)
 })
 public class OAuth2RefreshTokenEntity implements OAuth2RefreshToken {
 
@@ -60,10 +62,12 @@ public class OAuth2RefreshTokenEntity implements OAuth2RefreshToken {
 	public static final String QUERY_BY_CLIENT = "OAuth2RefreshTokenEntity.getByClient";
 	public static final String QUERY_EXPIRED_BY_DATE = "OAuth2RefreshTokenEntity.getAllExpiredByDate";
 	public static final String QUERY_ALL = "OAuth2RefreshTokenEntity.getAll";
+	public static final String QUERY_BY_NAME = "OAuth2RefreshTokenEntity.getByName";
 
 	public static final String PARAM_TOKEN_VALUE = "tokenValue";
 	public static final String PARAM_CLIENT = "client";
 	public static final String PARAM_DATE = "date";
+	public static final String PARAM_NAME = "name";
 
 	private Long id;
 
@@ -78,7 +82,7 @@ public class OAuth2RefreshTokenEntity implements OAuth2RefreshToken {
 	private Date expiration;
 
 	/**
-	 * 
+	 *
 	 */
 	public OAuth2RefreshTokenEntity() {
 
@@ -104,7 +108,7 @@ public class OAuth2RefreshTokenEntity implements OAuth2RefreshToken {
 	/**
 	 * The authentication in place when the original access token was
 	 * created
-	 * 
+	 *
 	 * @return the authentication
 	 */
 	@ManyToOne

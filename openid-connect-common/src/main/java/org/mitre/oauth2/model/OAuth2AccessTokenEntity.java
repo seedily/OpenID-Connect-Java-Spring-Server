@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
  * limitations under the License.
  *******************************************************************************/
 /**
- * 
+ *
  */
 package org.mitre.oauth2.model;
 
@@ -41,7 +42,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.Transient;
@@ -71,7 +71,8 @@ import com.nimbusds.jwt.JWT;
 	@NamedQuery(name = OAuth2AccessTokenEntity.QUERY_BY_CLIENT, query = "select a from OAuth2AccessTokenEntity a where a.client = :" + OAuth2AccessTokenEntity.PARAM_CLIENT),
 	@NamedQuery(name = OAuth2AccessTokenEntity.QUERY_BY_TOKEN_VALUE, query = "select a from OAuth2AccessTokenEntity a where a.jwt = :" + OAuth2AccessTokenEntity.PARAM_TOKEN_VALUE),
 	@NamedQuery(name = OAuth2AccessTokenEntity.QUERY_BY_APPROVED_SITE, query = "select a from OAuth2AccessTokenEntity a where a.approvedSite = :" + OAuth2AccessTokenEntity.PARAM_APPROVED_SITE),
-	@NamedQuery(name = OAuth2AccessTokenEntity.QUERY_BY_RESOURCE_SET, query = "select a from OAuth2AccessTokenEntity a join a.permissions p where p.resourceSet.id = :" + OAuth2AccessTokenEntity.PARAM_RESOURCE_SET_ID)
+	@NamedQuery(name = OAuth2AccessTokenEntity.QUERY_BY_RESOURCE_SET, query = "select a from OAuth2AccessTokenEntity a join a.permissions p where p.resourceSet.id = :" + OAuth2AccessTokenEntity.PARAM_RESOURCE_SET_ID),
+	@NamedQuery(name = OAuth2AccessTokenEntity.QUERY_BY_NAME, query = "select r from OAuth2AccessTokenEntity r where r.authenticationHolder.userAuth.name = :" + OAuth2AccessTokenEntity.PARAM_NAME)
 })
 @org.codehaus.jackson.map.annotate.JsonSerialize(using = OAuth2AccessTokenJackson1Serializer.class)
 @org.codehaus.jackson.map.annotate.JsonDeserialize(using = OAuth2AccessTokenJackson1Deserializer.class)
@@ -86,6 +87,7 @@ public class OAuth2AccessTokenEntity implements OAuth2AccessToken {
 	public static final String QUERY_EXPIRED_BY_DATE = "OAuth2AccessTokenEntity.getAllExpiredByDate";
 	public static final String QUERY_ALL = "OAuth2AccessTokenEntity.getAll";
 	public static final String QUERY_BY_RESOURCE_SET = "OAuth2AccessTokenEntity.getByResourceSet";
+	public static final String QUERY_BY_NAME = "OAuth2AccessTokenEntity.getByName";
 
 	public static final String PARAM_TOKEN_VALUE = "tokenValue";
 	public static final String PARAM_CLIENT = "client";
@@ -93,6 +95,7 @@ public class OAuth2AccessTokenEntity implements OAuth2AccessToken {
 	public static final String PARAM_DATE = "date";
 	public static final String PARAM_RESOURCE_SET_ID = "rsid";
 	public static final String PARAM_APPROVED_SITE = "approvedSite";
+	public static final String PARAM_NAME = "name";
 
 	public static final String ID_TOKEN_FIELD_NAME = "id_token";
 
@@ -113,9 +116,9 @@ public class OAuth2AccessTokenEntity implements OAuth2AccessToken {
 	private Set<String> scope;
 
 	private Set<Permission> permissions;
-	
+
 	private ApprovedSite approvedSite;
-	
+
 	private Map<String, Object> additionalInformation = new HashMap<>(); // ephemeral map of items to be added to the OAuth token response
 
 	/**
@@ -297,7 +300,7 @@ public class OAuth2AccessTokenEntity implements OAuth2AccessToken {
 			name = "access_token_permissions",
 			joinColumns = @JoinColumn(name = "access_token_id"),
 			inverseJoinColumns = @JoinColumn(name = "permission_id")
-	)
+			)
 	public Set<Permission> getPermissions() {
 		return permissions;
 	}

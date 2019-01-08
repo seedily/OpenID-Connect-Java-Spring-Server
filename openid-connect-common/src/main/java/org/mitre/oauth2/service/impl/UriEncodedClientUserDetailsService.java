@@ -1,6 +1,5 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +40,9 @@ import com.google.common.base.Strings;
 
 /**
  * Loads client details based on URI encoding as passed in from basic auth.
- * 
+ *
  *  Should only get called if non-encoded provider fails.
- * 
+ *
  * @author AANGANES
  *
  */
@@ -57,7 +56,7 @@ public class UriEncodedClientUserDetailsService implements UserDetailsService {
 
 	@Autowired
 	private ConfigurationPropertiesBean config;
-	
+
 	@Override
 	public UserDetails loadUserByUsername(String clientId) throws  UsernameNotFoundException {
 

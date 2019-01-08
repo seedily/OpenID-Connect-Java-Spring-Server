@@ -1,6 +1,5 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,7 @@
 package org.mitre.openid.connect.config;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
@@ -43,10 +43,9 @@ import com.google.gson.JsonSyntaxException;
 
 /**
  * @author jricher
- *
  */
 public class JsonMessageSource extends AbstractMessageSource {
-	// Logger for this class
+
 	private static final Logger logger = LoggerFactory.getLogger(JsonMessageSource.class);
 
 	private Resource baseDirectory;
@@ -54,10 +53,10 @@ public class JsonMessageSource extends AbstractMessageSource {
 	private Locale fallbackLocale = new Locale("en"); // US English is the fallback language
 
 	private Map<Locale, List<JsonObject>> languageMaps = new HashMap<>();
-	
+
 	@Autowired
 	private ConfigurationPropertiesBean config;
-	
+
 	@Override
 	protected MessageFormat resolveCode(String code, Locale locale) {
 
@@ -78,7 +77,7 @@ public class JsonMessageSource extends AbstractMessageSource {
 			// otherwise format the message
 			return new MessageFormat(value, locale);
 		}
-	
+
 	}
 
 	/**
@@ -92,7 +91,7 @@ public class JsonMessageSource extends AbstractMessageSource {
 			// no language maps, nothing to look up
 			return null;
 		}
-		
+
 		for (JsonObject lang : langs) {
 			String value = getValue(code, lang);
 			if (value != null) {
@@ -100,15 +99,14 @@ public class JsonMessageSource extends AbstractMessageSource {
 				return value;
 			}
 		}
-		
+
 		// if we didn't find anything return null
 		return null;
 	}
-	
+
 	/**
 	 * Get a value from a single map
 	 * @param code
-	 * @param locale
 	 * @param lang
 	 * @return
 	 */
@@ -148,9 +146,7 @@ public class JsonMessageSource extends AbstractMessageSource {
 			}
 		}
 
-
 		return value;
-
 	}
 
 	/**
@@ -165,33 +161,33 @@ public class JsonMessageSource extends AbstractMessageSource {
 				for (String namespace : config.getLanguageNamespaces()) {
 					// full locale string, e.g. "en_US"
 					String filename = locale.getLanguage() + "_" + locale.getCountry() + File.separator + namespace + ".json";
-					
+
 					Resource r = getBaseDirectory().createRelative(filename);
-					
+
 					if (!r.exists()) {
 						// fallback to language only
 						logger.debug("Fallback locale to language only.");
 						filename = locale.getLanguage() + File.separator + namespace + ".json";
 						r = getBaseDirectory().createRelative(filename);
 					}
-					
-					logger.info("No locale loaded, trying to load from " + r);
-					
+
+					logger.info("No locale loaded, trying to load from {}", r);
+
 					JsonParser parser = new JsonParser();
 					JsonObject obj = (JsonObject) parser.parse(new InputStreamReader(r.getInputStream(), "UTF-8"));
-					
+
 					set.add(obj);
 				}
 				languageMaps.put(locale, set);
+			} catch (FileNotFoundException e) {
+				logger.info("Unable to load locale because no messages file was found for locale {}", locale.getDisplayName());
+				languageMaps.put(locale, null);
 			} catch (JsonIOException | JsonSyntaxException | IOException e) {
 				logger.error("Unable to load locale", e);
 			}
 		}
 
 		return languageMaps.get(locale);
-
-
-
 	}
 
 	/**

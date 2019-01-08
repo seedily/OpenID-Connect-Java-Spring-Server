@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +16,11 @@
  * limitations under the License.
  *******************************************************************************/
 package org.mitre.openid.connect.service.impl;
+
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Matchers.isNull;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -71,11 +77,6 @@ import com.nimbusds.jwt.JWTParser;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.isA;
-import static org.mockito.Matchers.isNull;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;

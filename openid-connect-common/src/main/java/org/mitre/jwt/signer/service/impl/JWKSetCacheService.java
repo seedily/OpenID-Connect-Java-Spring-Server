@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
  * limitations under the License.
  *******************************************************************************/
 /**
- * 
+ *
  */
 package org.mitre.jwt.signer.service.impl;
 
@@ -43,12 +44,12 @@ import com.google.gson.JsonParseException;
 import com.nimbusds.jose.jwk.JWKSet;
 
 /**
- * 
+ *
  * Creates a caching map of JOSE signers/validators and encrypters/decryptors
  * keyed on the JWK Set URI. Dynamically loads JWK Sets to create the services.
- * 
+ *
  * @author jricher
- * 
+ *
  */
 @Service
 public class JWKSetCacheService {
@@ -150,11 +151,11 @@ public class JWKSetCacheService {
 			try {
 				String jsonString = restTemplate.getForObject(key, String.class);
 				JWKSet jwkSet = JWKSet.parse(jsonString);
-	
+
 				JWKSetKeyStore keyStore = new JWKSetKeyStore(jwkSet);
-	
+
 				JWTEncryptionAndDecryptionService service = new DefaultJWTEncryptionAndDecryptionService(keyStore);
-	
+
 				return service;
 			} catch (JsonParseException | RestClientException e) {
 				throw new IllegalArgumentException("Unable to load JWK Set");

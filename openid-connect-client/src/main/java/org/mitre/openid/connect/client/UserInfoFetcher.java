@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +61,7 @@ public class UserInfoFetcher {
 	private static final Logger logger = LoggerFactory.getLogger(UserInfoFetcher.class);
 
 	private LoadingCache<PendingOIDCAuthenticationToken, UserInfo> cache;
-	
+
 	public UserInfoFetcher() {
 		this(HttpClientBuilder.create().useSystemProperties().build());
 	}
@@ -71,7 +72,7 @@ public class UserInfoFetcher {
 				.maximumSize(100)
 				.build(new UserInfoLoader(httpClient));
 	}
-	
+
 	public UserInfo loadUserInfo(final PendingOIDCAuthenticationToken token) {
 		try {
 			return cache.get(token);
@@ -81,8 +82,8 @@ public class UserInfoFetcher {
 		}
 
 	}
-	
-	
+
+
 	private class UserInfoLoader extends CacheLoader<PendingOIDCAuthenticationToken, UserInfo> {
 		private HttpComponentsClientHttpRequestFactory factory;
 
@@ -90,22 +91,23 @@ public class UserInfoFetcher {
 			this.factory = new HttpComponentsClientHttpRequestFactory(httpClient);
 		}
 
+		@Override
 		public UserInfo load(final PendingOIDCAuthenticationToken token) throws URISyntaxException {
-	
+
 			ServerConfiguration serverConfiguration = token.getServerConfiguration();
-	
+
 			if (serverConfiguration == null) {
 				logger.warn("No server configuration found.");
 				return null;
 			}
-	
+
 			if (Strings.isNullOrEmpty(serverConfiguration.getUserInfoUri())) {
 				logger.warn("No userinfo endpoint, not fetching.");
 				return null;
 			}
-	
+
 			String userInfoString = null;
-	
+
 			if (serverConfiguration.getUserInfoTokenMethod() == null || serverConfiguration.getUserInfoTokenMethod().equals(UserInfoTokenMethod.HEADER)) {
 				RestTemplate restTemplate = new RestTemplate(factory) {
 
@@ -145,7 +147,7 @@ public class UserInfoFetcher {
 				// didn't get anything throw exception
 				throw new IllegalArgumentException("Unable to load user info");
 			}
-	
+
 		}
 	}
 

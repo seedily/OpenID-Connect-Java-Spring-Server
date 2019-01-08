@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +27,7 @@ import com.nimbusds.jwt.JWT;
 
 /**
  * Service to create specialty OpenID Connect tokens.
- * 
+ *
  * @author Amanda Anganes
  *
  */
@@ -34,7 +35,7 @@ public interface OIDCTokenService {
 
 	/**
 	 * Create an id token with the information provided.
-	 * 
+	 *
 	 * @param client
 	 * @param request
 	 * @param issueTime
@@ -49,7 +50,7 @@ public interface OIDCTokenService {
 
 	/**
 	 * Create a registration access token for the given client.
-	 * 
+	 *
 	 * @param client
 	 * @return
 	 */
@@ -57,7 +58,7 @@ public interface OIDCTokenService {
 
 	/**
 	 * Create a resource access token for the given client (protected resource).
-	 * 
+	 *
 	 * @param client
 	 * @return
 	 */

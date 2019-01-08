@@ -1,6 +1,5 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +39,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 /**
  * This class stands in for an original Authentication object.
- * 
+ *
  * @author jricher
  *
  */

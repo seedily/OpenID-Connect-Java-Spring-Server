@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +65,7 @@ import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 /**
  * Default implementation of service to create specialty OpenID Connect tokens.
- * 
+ *
  * @author Amanda Anganes
  *
  */
@@ -149,6 +150,8 @@ public class DefaultOIDCTokenService implements OIDCTokenService {
 			Base64URL at_hash = IdTokenHashUtils.getAccessTokenHash(signingAlg, accessToken);
 			idClaims.claim("at_hash", at_hash);
 		}
+
+		addCustomIdTokenClaims(idClaims, client, request, sub, accessToken);
 
 		if (client.getIdTokenEncryptedResponseAlg() != null && !client.getIdTokenEncryptedResponseAlg().equals(Algorithm.NONE)
 				&& client.getIdTokenEncryptedResponseEnc() != null && !client.getIdTokenEncryptedResponseEnc().equals(Algorithm.NONE)
@@ -271,12 +274,12 @@ public class DefaultOIDCTokenService implements OIDCTokenService {
 		token.setAuthenticationHolder(authHolder);
 
 		JWTClaimsSet claims = new JWTClaimsSet.Builder()
-			.audience(Lists.newArrayList(client.getClientId()))
-			.issuer(configBean.getIssuer())
-			.issueTime(new Date())
-			.expirationTime(token.getExpiration())
-			.jwtID(UUID.randomUUID().toString()) // set a random NONCE in the middle of it
-			.build();
+				.audience(Lists.newArrayList(client.getClientId()))
+				.issuer(configBean.getIssuer())
+				.issueTime(new Date())
+				.expirationTime(token.getExpiration())
+				.jwtID(UUID.randomUUID().toString()) // set a random NONCE in the middle of it
+				.build();
 
 		JWSAlgorithm signingAlg = jwtService.getDefaultSigningAlgorithm();
 		JWSHeader header = new JWSHeader(signingAlg, null, null, null, null, null, null, null, null, null,
@@ -332,6 +335,20 @@ public class DefaultOIDCTokenService implements OIDCTokenService {
 	public void setAuthenticationHolderRepository(
 			AuthenticationHolderRepository authenticationHolderRepository) {
 		this.authenticationHolderRepository = authenticationHolderRepository;
+	}
+
+	/**
+	 * Hook for subclasses that allows adding custom claims to the JWT
+	 * that will be used as id token.
+	 * @param idClaims the builder holding the current claims
+	 * @param client information about the requesting client
+	 * @param request request that caused the id token to be created
+	 * @param sub subject auf the id token
+	 * @param accessToken the access token
+	 * @param authentication current authentication
+	 */
+	protected void addCustomIdTokenClaims(JWTClaimsSet.Builder idClaims, ClientDetailsEntity client, OAuth2Request request,
+	    String sub, OAuth2AccessTokenEntity accessToken) {
 	}
 
 }

@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,15 +71,15 @@ public class JpaAuthenticationHolderRepository implements AuthenticationHolderRe
 	@Override
 	@Transactional(value="defaultTransactionManager")
 	public List<AuthenticationHolderEntity> getOrphanedAuthenticationHolders() {
-        DefaultPageCriteria pageCriteria = new DefaultPageCriteria(0,MAXEXPIREDRESULTS);
-        return getOrphanedAuthenticationHolders(pageCriteria);
+		DefaultPageCriteria pageCriteria = new DefaultPageCriteria(0,MAXEXPIREDRESULTS);
+		return getOrphanedAuthenticationHolders(pageCriteria);
 	}
 
-    @Override
-    @Transactional(value="defaultTransactionManager")
-    public List<AuthenticationHolderEntity> getOrphanedAuthenticationHolders(PageCriteria pageCriteria) {
-        TypedQuery<AuthenticationHolderEntity> query = manager.createNamedQuery(AuthenticationHolderEntity.QUERY_GET_UNUSED, AuthenticationHolderEntity.class);
-        return JpaUtil.getResultPage(query, pageCriteria);
-    }
+	@Override
+	@Transactional(value="defaultTransactionManager")
+	public List<AuthenticationHolderEntity> getOrphanedAuthenticationHolders(PageCriteria pageCriteria) {
+		TypedQuery<AuthenticationHolderEntity> query = manager.createNamedQuery(AuthenticationHolderEntity.QUERY_GET_UNUSED, AuthenticationHolderEntity.class);
+		return JpaUtil.getResultPage(query, pageCriteria);
+	}
 
 }

@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
  * limitations under the License.
  *******************************************************************************/
 /**
- * 
+ *
  */
 package org.mitre.oauth2.token;
 
@@ -30,12 +31,12 @@ import org.springframework.security.oauth2.provider.OAuth2RequestValidator;
 import org.springframework.security.oauth2.provider.TokenRequest;
 
 /**
- * 
+ *
  * Validates the scopes on a request by comparing them against a client's
  * allowed scopes, but allow custom scopes to function through the system scopes
- * 
+ *
  * @author jricher
- * 
+ *
  */
 public class ScopeServiceAwareOAuth2RequestValidator implements OAuth2RequestValidator {
 

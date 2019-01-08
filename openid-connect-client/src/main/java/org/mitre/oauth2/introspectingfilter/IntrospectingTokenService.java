@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +16,8 @@
  * limitations under the License.
  *******************************************************************************/
 package org.mitre.oauth2.introspectingfilter;
+
+import static org.mitre.oauth2.model.ClientDetailsEntity.AuthMethod.SECRET_BASIC;
 
 import java.io.IOException;
 import java.net.URI;
@@ -53,8 +56,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.nimbusds.jose.util.Base64;
-
-import static org.mitre.oauth2.model.ClientDetailsEntity.AuthMethod.SECRET_BASIC;
 
 /**
  * This ResourceServerTokenServices implementation introspects incoming tokens at a
@@ -243,7 +244,10 @@ public class IntrospectingTokenService implements ResourceServerTokenServices {
 	private Authentication createUserAuthentication(JsonObject token) {
 		JsonElement userId = token.get("user_id");
 		if(userId == null) {
-			return null;
+			userId = token.get("sub");
+			if (userId == null) {
+				return null;
+			}
 		}
 
 		return new PreAuthenticatedAuthenticationToken(userId.getAsString(), token, introspectionAuthorityGranter.getAuthorities(token));

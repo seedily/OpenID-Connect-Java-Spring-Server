@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +40,7 @@ import com.google.common.collect.Collections2;
 
 /**
  * Implementation of the ApprovedSiteService
- * 
+ *
  * @author Michael Joseph Walsh, aanganes
  *
  */
@@ -184,8 +185,8 @@ public class DefaultApprovedSiteService implements ApprovedSiteService {
 	@Override
 	public List<OAuth2AccessTokenEntity> getApprovedAccessTokens(
 			ApprovedSite approvedSite) {
-		return tokenRepository.getAccessTokensForApprovedSite(approvedSite); 
+		return tokenRepository.getAccessTokensForApprovedSite(approvedSite);
 
 	}
-	
+
 }

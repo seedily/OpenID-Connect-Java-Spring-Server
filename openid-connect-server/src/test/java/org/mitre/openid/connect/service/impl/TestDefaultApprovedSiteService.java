@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright 2017 The MITRE Corporation
- *   and the MIT Internet Trust Consortium
+ * Copyright 2018 The MIT Internet Trust Consortium
+ *
+ * Portions copyright 2011-2013 The MITRE Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +17,8 @@
  *******************************************************************************/
 package org.mitre.openid.connect.service.impl;
 
-import java.util.ArrayList;
+import static org.mockito.Matchers.any;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,8 +42,6 @@ import org.springframework.test.annotation.Rollback;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 
-import static org.mockito.Matchers.any;
-
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -60,7 +60,7 @@ public class TestDefaultApprovedSiteService {
 
 	@Mock
 	private OAuth2TokenRepository tokenRepository;
-	
+
 	@Mock
 	private StatsService statsService;
 
